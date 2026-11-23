@@ -1,0 +1,24 @@
+name: Test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android project, app icon and name (first run only)
+        run: |
+          if [ ! -d android ]; then flutter create --platforms=android --org com.hmc1 --project-name hmc1 .; fi
+          rm -f test/widget_test.dart
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          cp -r tool/android_icons/mipmap-* android/app/src/main/res/
+          sed -i "s/android:label=\"[^\"]*\"/android:label=\"HMC: 1\"/" android/app/src/main/AndroidManifest.xml
+      - run: flutter pub get
+      - run: flutter test
